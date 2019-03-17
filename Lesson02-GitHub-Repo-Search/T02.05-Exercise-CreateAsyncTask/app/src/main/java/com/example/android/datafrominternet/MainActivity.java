@@ -15,6 +15,7 @@
  */
 package com.example.android.datafrominternet;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -56,20 +57,37 @@ public class MainActivity extends AppCompatActivity {
         String githubQuery = mSearchBoxEditText.getText().toString();
         URL githubSearchUrl = NetworkUtils.buildUrl(githubQuery);
         mUrlDisplayTextView.setText(githubSearchUrl.toString());
-        String githubSearchResults = null;
-        try {
-            githubSearchResults = NetworkUtils.getResponseFromHttpUrl(githubSearchUrl);
-            mSearchResultsTextView.setText(githubSearchResults);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        // TODO (4) Create a new GithubQueryTask and call its execute method, passing in the url to query
+        new GithubQueryTask().execute(githubSearchUrl);
     }
 
-    // TODO (1) Create a class called GithubQueryTask that extends AsyncTask<URL, Void, String>
-    // TODO (2) Override the doInBackground method to perform the query. Return the results. (Hint: You've already written the code to perform the query)
-    // TODO (3) Override onPostExecute to display the results in the TextView
+    class GithubQueryTask extends AsyncTask {
 
+        @Override
+        protected Object doInBackground(Object[] objects) {
+            String gitHubSearchResults = null;
+            for(Object object : objects) {
+                if(object instanceof URL) {
+                    URL currentUrl = (URL) object;
+                    try{
+                        gitHubSearchResults = NetworkUtils.getResponseFromHttpUrl(currentUrl);
+                    } catch(IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            return gitHubSearchResults;
+        }
+
+        @Override
+        protected void onPostExecute(Object o) {
+            if(o != null && o instanceof String) {
+                String result = (String) o;
+                if(result.trim() != "") {
+                    mSearchResultsTextView.setText(result);
+                }
+            }
+        }
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
